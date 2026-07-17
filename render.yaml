@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: genlogs-portal
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt && npm ci --prefix frontend && npm run build --prefix frontend
+    startCommand: uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: VITE_GOOGLE_MAPS_API_KEY
+        sync: false

@@ -1,0 +1,47 @@
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local environment files (keep safe templates tracked)
+.env
+.env.*
+!.env.example
+
+# Frontend: npm, Vite, and Vitest
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Backend: Python, virtual environments, and test tools
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
+
+# Local logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Deployment tooling
+.vercel/
