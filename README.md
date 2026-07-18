@@ -29,12 +29,23 @@ Carrier data is intentionally static for this simulation. Only these exact direc
 
 Matching is directional. Reversed pairs, mixed pairs such as New York City → Los Angeles, unlisted cities, and every other valid origin/destination combination receive the UPS/FedEx fallback fixture.
 
-## Diagrams
+## Proposed Genlogs Platform Design
 
-- [Two-service architecture](docs/diagrams/architecture.md)
-- [Conceptual ER/data-contract diagram](docs/diagrams/er-diagram.md)
+These diagrams answer the broader system-design portions of the assessment. They describe how a production Genlogs platform could ingest highway-camera images, process observations asynchronously in batches, resolve carriers, infer trips, aggregate lane volumes, and store the associated entities.
 
-The ER diagram is conceptual because this application has no database or persistent entities.
+- [Proposed platform architecture and information flow](docs/diagrams/genlogs-proposed-architecture.png)
+- [Proposed high-level database and entity design](docs/diagrams/high-level-er-diagram.png)
+
+These diagrams are a proposed production design and should not be interpreted as components implemented within this take-home exercise.
+
+## Implemented Take-Home Portal Design
+
+These documents describe the application actually implemented in this repository and deployed to Render.
+
+- [Portal deployment architecture](docs/diagrams/portal-deployment-architecture.md)
+- [Portal API data contract](docs/diagrams/portal-data-contract.md)
+
+The implemented portal consists of a React/Vite frontend and a FastAPI backend. Carrier availability is intentionally supplied through the static fixtures required by the exercise, so the take-home implementation does not require a persistent application database. The proposed ER diagram above instead answers the separate question of how the broader Genlogs platform database could be designed.
 
 ## Prerequisites
 
@@ -297,6 +308,6 @@ Google restriction changes may take a few minutes to propagate. Changing a Vite 
 
 ## Deliberate scope exclusions
 
-The project does not include a database, authentication, camera processing, image recognition, Redux, message queues, background workers, or unrelated Genlogs production architecture.
+The implemented portal does not include a database, authentication, camera processing, image recognition, Redux, message queues, background workers, or the proposed Genlogs production-platform components documented above. Those proposed diagrams are system-design artifacts only.
 
 Meaningful AI prompts are recorded in [`docs/ai-prompts.md`](docs/ai-prompts.md); development constraints are recorded in [`AGENTS.md`](AGENTS.md).

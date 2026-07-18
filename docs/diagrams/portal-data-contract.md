@@ -1,6 +1,6 @@
-# Conceptual ER / Data-Contract Diagram
+# Portal API Data Contract
 
-This project has no database. The diagram documents the transient request/response relationship and the immutable carrier fixture shape; it does not represent persisted tables.
+The implemented portal has no database. This diagram documents the transient carrier API request/response relationship and the immutable fixture shape; it is not the proposed production-platform ER design.
 
 ```mermaid
 erDiagram
