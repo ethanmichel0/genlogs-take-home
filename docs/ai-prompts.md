@@ -32,8 +32,8 @@ Resulting decisions: implement and test the deterministic backend first, mock ex
 
 Resulting decisions: document that Vite embeds `VITE_*` values at build time, require website and API restrictions for the Google key, use an explicit backend CORS allowlist, and keep deployment instructions provider-neutral until public targets are selected.
 
-## Single-service Render preparation
+## Final two-service Render deployment
 
-> Prepare deployment-only changes for one Render Python web service: compile the Vite frontend, serve it from FastAPI after `/api` and `/health`, use same-origin API requests in production while preserving separate local servers, add a credential-free Render Blueprint, document the workflow, and verify the combined service without performing a live deployment.
+> Treat the working Render frontend and backend as the source of truth. Document the actual two-service deployment, replace pending URLs and obsolete combined-service instructions, add architecture and conceptual ER diagrams, rerun all checks, audit tracked files for credentials and private paths, and complete the OpenSpec tasks only after verification.
 
-Resulting decisions: conditionally mount `frontend/dist` after explicit FastAPI routes, add a small health endpoint, keep `VITE_API_BASE_URL` as an optional override, and let Render inject the Google browser key at build time with `sync: false`.
+Resulting decisions: deploy React as a Render Static Site and FastAPI as a separate Render Web Service, compile the backend URL into the frontend through `VITE_API_BASE_URL`, allow only the deployed frontend origin through CORS, record both verified HTTPS URLs, and keep the Google browser key in Render with `sync: false`.

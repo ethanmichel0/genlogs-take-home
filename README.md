@@ -4,13 +4,16 @@ A deliberately small take-home application for comparing Google driving routes a
 
 ## Deployment status
 
-| Surface | Public URL |
-| --- | --- |
-| Render web service | Pending deployment |
-| Frontend | Same Render service URL after deployment |
-| Carrier API | `<Render service URL>/api/carriers` after deployment |
+The verified production deployment uses two separate Render services:
 
-This repository is prepared for a single-service Render Blueprint, but no live deployment has been attempted. Replace the pending entry with the verified HTTPS URL after deployment.
+| Surface | Verified public URL |
+| --- | --- |
+| React frontend (Render Static Site) | [https://genlogs-take-home-2.onrender.com](https://genlogs-take-home-2.onrender.com) |
+| FastAPI backend (Render Web Service) | [https://genlogs-take-home-1.onrender.com](https://genlogs-take-home-1.onrender.com) |
+| Carrier API | [https://genlogs-take-home-1.onrender.com/api/carriers](https://genlogs-take-home-1.onrender.com/api/carriers) |
+| Backend health check | [https://genlogs-take-home-1.onrender.com/health](https://genlogs-take-home-1.onrender.com/health) |
+
+These URLs and the frontend-to-backend CORS path were verified on July 17, 2026. The frontend and backend remain independently deployable; the production frontend is not served by FastAPI.
 
 ## What the application does
 
@@ -18,7 +21,6 @@ This repository is prepared for a single-service Render Blueprint, but no live d
 - Requests available alternative driving routes from Google, orders them by returned duration, and displays up to the three fastest routes. Google may return only one or two routes; that is a valid result.
 - Sends the selected city names to `POST /api/carriers` and renders the ordered carrier fixture returned by FastAPI.
 - Keeps Google routing and map rendering in the browser and carrier matching in the backend.
-- Serves the compiled React application from FastAPI in production while preserving separate Vite and FastAPI development servers locally.
 
 Carrier data is intentionally static for this simulation. Only these exact directional normalized pairs receive special results:
 
@@ -26,6 +28,13 @@ Carrier data is intentionally static for this simulation. Only these exact direc
 - San Francisco → Los Angeles
 
 Matching is directional. Reversed pairs, mixed pairs such as New York City → Los Angeles, unlisted cities, and every other valid origin/destination combination receive the UPS/FedEx fallback fixture.
+
+## Diagrams
+
+- [Two-service architecture](docs/diagrams/architecture.md)
+- [Conceptual ER/data-contract diagram](docs/diagrams/er-diagram.md)
+
+The ER diagram is conceptual because this application has no database or persistent entities.
 
 ## Prerequisites
 
@@ -40,7 +49,9 @@ Matching is directional. Reversed pairs, mixed pairs such as New York City → L
 
 Restrict the browser key to those APIs and to the exact local and deployed website origins that use it. For local development, allow both `http://localhost:5173/*` and `http://127.0.0.1:5173/*` if both hostnames will be used.
 
-## Clean-clone setup
+## Clean-clone local setup
+
+Local development intentionally runs the frontend and backend separately.
 
 ### Backend
 
@@ -53,7 +64,7 @@ cp .env.example .env
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000 --env-file .env
 ```
 
-The API is then available at `http://127.0.0.1:8000`, with interactive FastAPI documentation at `http://127.0.0.1:8000/docs`.
+The API is available at `http://127.0.0.1:8000`, with interactive FastAPI documentation at `http://127.0.0.1:8000/docs` and health status at `http://127.0.0.1:8000/health`.
 
 ### Frontend
 
@@ -65,7 +76,7 @@ npm ci
 cp .env.example .env
 ```
 
-Set the Google key in `frontend/.env`. The API override is optional because Vite development defaults to `http://localhost:8000`:
+Set the Google key in `frontend/.env`. The API override is optional in development because Vite development defaults to `http://localhost:8000`:
 
 ```dotenv
 VITE_GOOGLE_MAPS_API_KEY=your-browser-restricted-key
@@ -87,9 +98,15 @@ Open `http://127.0.0.1:5173`. Local `.env` files are ignored and must never be c
 | Variable | Purpose |
 | --- | --- |
 | `VITE_GOOGLE_MAPS_API_KEY` | Browser-visible Google Maps key supplied when Vite builds the application. |
-| `VITE_API_BASE_URL` | Optional FastAPI base URL override without a trailing slash. Development defaults to `http://localhost:8000`; production defaults to the current origin. |
+| `VITE_API_BASE_URL` | FastAPI base URL without a trailing slash. Development defaults to `http://localhost:8000`; set it to the deployed backend URL for the two-service production build. |
 
-`VITE_*` values are embedded in the generated frontend bundle at build time. Do not deploy the local `.env` file; configure the Google key in Render and rebuild after changing it. The Google key is visible in the browser by design and must be protected with website and API restrictions. Leave `VITE_API_BASE_URL` unset on the single-service Render deployment so requests use `/api/carriers` on the same origin.
+The deployed frontend uses:
+
+```dotenv
+VITE_API_BASE_URL=https://genlogs-take-home-1.onrender.com
+```
+
+`VITE_*` values are embedded in the generated frontend bundle at build time. Do not upload a local `.env` file to Render. Configure both production values in the frontend service dashboard and redeploy after changing either one. The Google key is visible in the browser by design and must be protected with website and API restrictions.
 
 ### Backend
 
@@ -97,13 +114,19 @@ Open `http://127.0.0.1:5173`. Local `.env` files are ignored and must never be c
 | --- | --- |
 | `ALLOWED_ORIGINS` | Comma-separated exact frontend origins allowed by CORS, without trailing slashes. |
 
-For example:
+For local development, use:
 
 ```dotenv
-ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,https://your-frontend.example
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-Wildcard CORS is intentionally not used. `ALLOWED_ORIGINS` supports the separate local development servers; the single-service production build uses same-origin requests and does not require production CORS configuration.
+The deployed backend uses:
+
+```dotenv
+ALLOWED_ORIGINS=https://genlogs-take-home-2.onrender.com
+```
+
+Wildcard CORS is intentionally not used.
 
 ## Carrier API
 
@@ -146,7 +169,7 @@ Both fields must be non-blank strings. Missing, non-string, blank, or unexpected
 
 Normalization applies Unicode normalization, trimming, case folding, period/comma separator removal, and whitespace collapse. Explicit aliases cover `New York City`, `New York`, `NYC`, `Washington DC`, `Washington D.C.`, and `Washington`. Matching remains directional and does not use fuzzy or substring matching.
 
-## Testing and builds
+## Testing and production builds
 
 Backend tests do not require live credentials:
 
@@ -162,31 +185,30 @@ cd frontend
 npm test
 ```
 
-Create the production frontend bundle with:
+Create the production frontend bundle from the repository root with the deployed backend URL supplied at build time:
 
 ```bash
 npm ci --prefix frontend
-VITE_GOOGLE_MAPS_API_KEY=your-browser-restricted-key VITE_API_BASE_URL= npm run build --prefix frontend
+VITE_GOOGLE_MAPS_API_KEY=your-browser-restricted-key \
+VITE_API_BASE_URL=https://genlogs-take-home-1.onrender.com \
+npm run build --prefix frontend
 ```
 
-The static output is written to `frontend/dist/`. `VITE_API_BASE_URL=` overrides any local development value for this build so the compiled application uses same-origin API requests. FastAPI mounts this directory when it exists.
-
-Preview the combined production service from the repository root:
+The static output is written to `frontend/dist/`. To preview that production bundle locally, run the backend on port 8000 and then run:
 
 ```bash
-uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+npm run preview --prefix frontend -- --host 127.0.0.1
 ```
 
-Then verify:
+The host-compatible backend start command is:
 
-```text
-http://127.0.0.1:8000/health
-http://127.0.0.1:8000/
+```bash
+uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port "$PORT"
 ```
 
 ## Manual integration checklist
 
-Use a billing-enabled Google project and a restricted development key, then verify:
+Use a billing-enabled Google project and a restricted development or deployment key, then verify:
 
 - Both city controls show Google locality suggestions.
 - Search stays disabled until a Google suggestion is selected for each city.
@@ -200,55 +222,67 @@ Use a billing-enabled Google project and a restricted development key, then veri
 - Route and carrier errors are reported independently so one successful result remains visible if the other service fails.
 - Starting without `VITE_GOOGLE_MAPS_API_KEY` shows a clear configuration message.
 
-Automated verification covers alternative-route ordering and the three-route cap because the live Google response is variable and may contain only one route.
+Automated verification covers alternative-route ordering, the three-route cap, fewer-than-three results, and error behavior because live Google responses are variable.
 
-## Render Blueprint deployment
+## Render two-service deployment
 
-The root-level `render.yaml` defines one free Python web service. Its build installs Python dependencies, installs frontend dependencies, and creates `frontend/dist`; its start command runs FastAPI, which serves both the API and compiled frontend. `/health` is the Render health-check endpoint.
+The root-level `render.yaml` describes two independent Render services. The existing production deployment uses the URLs in the deployment table above.
 
-The Blueprint uses:
+### Backend Web Service
+
+Use these Render settings:
 
 ```text
-Build: pip install -r backend/requirements.txt && npm ci --prefix frontend && npm run build --prefix frontend
+Runtime: Python
+Build: pip install -r backend/requirements.txt
 Start: uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
-Health: /health
+Health check: /health
+ALLOWED_ORIGINS: https://genlogs-take-home-2.onrender.com
 ```
 
-To deploy after pushing the repository to a Git provider:
+### Frontend Static Site
 
-1. In Render, choose **New → Blueprint**.
-2. Connect the repository containing this root-level `render.yaml`.
-3. Review the single `genlogs-portal` Python web service.
-4. When prompted for `VITE_GOOGLE_MAPS_API_KEY`, paste the browser-restricted Google key in the Render dashboard. The Blueprint declares the variable with `sync: false`; no credential is stored in Git.
-5. Apply the Blueprint and wait for the build and `/health` check to pass.
-6. Open the assigned `https://<service-name>.onrender.com` URL and complete the deployed verification checklist.
+Use these Render settings:
 
-Do not define `VITE_API_BASE_URL` in Render unless intentionally calling a different backend. When it is absent, the production frontend calls `/api/carriers` on its own Render origin.
+```text
+Runtime: Static
+Build: npm ci --prefix frontend && npm run build --prefix frontend
+Publish directory: frontend/dist
+VITE_API_BASE_URL: https://genlogs-take-home-1.onrender.com
+VITE_GOOGLE_MAPS_API_KEY: set privately in the Render dashboard
+```
+
+To reproduce both services with the Blueprint:
+
+1. Push the repository to a Git provider.
+2. In Render, choose **New → Blueprint** and select the root-level `render.yaml`.
+3. Provide `VITE_GOOGLE_MAPS_API_KEY` when Render prompts for the `sync: false` value.
+4. Apply the Blueprint and wait for the backend `/health` check and frontend static build to pass.
+5. Confirm the frontend service calls the backend service over HTTPS and complete the deployed checklist below.
+
+The same settings can be entered manually by creating one **Web Service** for FastAPI and one **Static Site** for Vite.
 
 ### Google Maps key for Render
 
 The Google project must have Maps JavaScript API, Places API (New), and Routes API enabled. Restrict the key to those APIs.
 
-After Render assigns the service URL, add its exact HTTPS referrer to the key's **Websites** restrictions:
+Add the deployed frontend URL—not the backend URL—to the key's **Websites** restrictions:
 
 ```text
-https://<service-name>.onrender.com/*
+https://genlogs-take-home-2.onrender.com/*
 ```
 
-Google restriction changes may take a few minutes to propagate. Saving a new key value in Render requires a rebuild because Vite embeds it during the build.
+Google restriction changes may take a few minutes to propagate. Changing a Vite environment value in Render requires a new frontend build because Vite embeds it during the build.
 
 ### Deployed verification
 
-After the Render URL is available:
-
-1. Confirm the frontend loads over HTTPS with no Google authorization errors.
+1. Confirm [the frontend](https://genlogs-take-home-2.onrender.com) loads over HTTPS with no Google authorization errors.
 2. Run New York City → Washington DC and verify the special carrier fixture.
 3. Run San Francisco → Los Angeles and verify the second special fixture.
 4. Run a mixed pair and verify UPS/FedEx.
 5. Confirm Google returns and draws the routes available for each search; fewer than three is valid.
-6. Confirm the frontend sends `POST /api/carriers` to the same HTTPS origin without mixed-content or CORS errors.
-7. Confirm `<Render service URL>/health` returns `{ "status": "ok" }`.
-8. Record the verified Render URL in the deployment-status table above.
+6. Confirm frontend requests go to `https://genlogs-take-home-1.onrender.com/api/carriers` without mixed-content or CORS errors.
+7. Confirm [the health endpoint](https://genlogs-take-home-1.onrender.com/health) returns `{ "status": "ok" }`.
 
 ## Known limitations
 
@@ -257,6 +291,7 @@ After the Render URL is available:
 - Google may return fewer than three routes; real-world route counts and durations are not deterministic.
 - Backend special-pair recognition deliberately uses a small documented alias set rather than fuzzy geographic matching.
 - The browser key is embedded in the frontend bundle and depends on correct website/API restrictions for protection.
+- Render's free services may cold-start after inactivity.
 - There is no persistence, authentication, authorization, saved search history, booking, tracking, or carrier administration.
 - Live Google behavior is verified manually; deterministic automated tests mock the external boundary.
 
@@ -264,4 +299,4 @@ After the Render URL is available:
 
 The project does not include a database, authentication, camera processing, image recognition, Redux, message queues, background workers, or unrelated Genlogs production architecture.
 
-Meaningful AI prompts are recorded in `docs/ai-prompts.md`; development constraints are recorded in `AGENTS.md`.
+Meaningful AI prompts are recorded in [`docs/ai-prompts.md`](docs/ai-prompts.md); development constraints are recorded in [`AGENTS.md`](AGENTS.md).
