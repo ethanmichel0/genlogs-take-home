@@ -17,7 +17,7 @@ These URLs and the frontend-to-backend CORS path were verified on July 17, 2026.
 
 ## What the application does
 
-- Requires the user to select From and To cities from Google Place Autocomplete suggestions.
+- Requires the user to select From and To cities from Google Place Autocomplete suggestions limited to cities in the United States.
 - Requests available alternative driving routes from Google, orders them by returned duration, and displays up to the three fastest routes. Google may return only one or two routes; that is a valid result.
 - Sends the selected city names to `POST /api/carriers` and renders the ordered carrier fixture returned by FastAPI.
 - Keeps Google routing and map rendering in the browser and carrier matching in the backend.

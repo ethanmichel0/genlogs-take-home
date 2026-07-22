@@ -46,6 +46,7 @@ export default function CityAutocomplete({
 
       autocomplete = new PlaceAutocompleteElement({
         includedPrimaryTypes: ['locality'],
+        includedRegionCodes: ['us'],
       });
       autocomplete.placeholder = `Search ${label.toLowerCase()}`;
       autocomplete.setAttribute('aria-label', label);
@@ -78,4 +79,3 @@ export default function CityAutocomplete({
     </div>
   );
 }
-

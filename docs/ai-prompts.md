@@ -37,3 +37,9 @@ Resulting decisions: document that Vite embeds `VITE_*` values at build time, re
 > Treat the working Render frontend and backend as the source of truth. Document the actual two-service deployment, replace pending URLs and obsolete combined-service instructions, add architecture and conceptual ER diagrams, rerun all checks, audit tracked files for credentials and private paths, and complete the OpenSpec tasks only after verification.
 
 Resulting decisions: deploy React as a Render Static Site and FastAPI as a separate Render Web Service, compile the backend URL into the frontend through `VITE_API_BASE_URL`, allow only the deployed frontend origin through CORS, record both verified HTTPS URLs, and keep the Google browser key in Render with `sync: false`.
+
+## Reviewer feedback: US-only city suggestions
+
+> Restrict Google Place Autocomplete recommendations for both the From and To fields to locations within the United States, preserve the existing city/locality restriction and all current portal behavior, verify the restriction for both fields, document the US-city scope, and run the frontend tests and production build before completion.
+
+Resulting decisions: configure both `PlaceAutocompleteElement` instances with `includedRegionCodes: ['us']` while retaining `includedPrimaryTypes: ['locality']`, cover both fields at the mocked Google boundary, and leave route-search and backend carrier behavior unchanged.
